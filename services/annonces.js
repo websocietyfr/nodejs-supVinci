@@ -8,7 +8,8 @@ module.exports = {
     getAllAnnonces,
     uploadFiles,
     createAnnonce,
-    sendComment
+    sendComment,
+    getFile
 }
 
 async function getAllAnnonces(req, res, next) {
@@ -18,17 +19,33 @@ async function getAllAnnonces(req, res, next) {
 }
 
 async function uploadFiles(req, res, next) {
-    const form = new formidable.IncomingForm();
-    const filepath = form.parse(req, function (err, fields, files) {
-        console.log('FILES DATA', files);
-        var oldpath = files.filetoupload[0].filepath;
-        var newpath = UPLOAD_DIR + files.filetoupload[0].originalFilename;
-        fs.copyFile(oldpath, newpath, function (err) {
+    try {
+        const form = new formidable.IncomingForm();
+        const filepath = await form.parse(req, function (err, fields, files) {
             if (err) throw err;
+            const oldpath = files.filetoupload[0].filepath;
+            const filename = Date.now().toString() + '-' +  files.filetoupload[0].originalFilename;
+            const newpath = UPLOAD_DIR + filename;
+            fs.copyFile(oldpath, newpath, function (err) {
+                if (err) throw err;
+                res.status(201).json({
+                    status: 'success',
+                    message: 'File uploaded and moved!',
+                    filepath: filename
+                });
+                res.end();
+            });
         });
-        return newpath;
-    });
-    return res.status(201).json({status: 'success', message: 'File uploaded and moved!', filepath });
+        return filepath;
+    } catch(e) {
+        console.log('ERROR', e);
+        return res.status(400).json({status: 'error', error: e.message});
+    }
+}
+
+async function getFile(req, res, next) {
+    const readStream = fs.createReadStream(UPLOAD_DIR + req.params.path);
+    readStream.pipe(res);
 }
 
 async function createAnnonce(req, res, next) {
