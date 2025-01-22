@@ -14,8 +14,8 @@ module.exports = (sequelize, DataTypes) => {
       })
     }
 
-    cleanUser(models) {
-      const {password, ...currentUser} = this.dataValues;
+    cleanUser() {
+      const {password, token, ...currentUser} = this.dataValues;
       return currentUser;
     }
   }
@@ -23,7 +23,8 @@ module.exports = (sequelize, DataTypes) => {
     firstName: DataTypes.STRING,
     lastName: DataTypes.STRING,
     email: DataTypes.STRING,
-    password: DataTypes.STRING
+    password: DataTypes.STRING,
+    token: DataTypes.TEXT
   }, {
     sequelize,
     modelName: 'User'

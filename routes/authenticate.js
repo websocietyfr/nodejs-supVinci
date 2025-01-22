@@ -47,6 +47,9 @@ router.post('/login', async (req, res, next) => {
 
         const token = jwt.sign({ user: user.cleanUser() }, process.env.SECRET_KEY, { expiresIn: '1h' });
 
+        user.token = token;
+        user.save();
+
         return res.status(200).json({ token, user: user.cleanUser() });
     } catch(err) {
         console.log('ERROR', err);
@@ -62,10 +65,13 @@ router.get('/logout', async (req, res, next) => {
     const token = req.headers['authorization'];
     if (!token) return res.status(401).send({ message: 'No token provided' });
 
-    jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+    jwt.verify(token, process.env.SECRET_KEY, async (err, decoded) => {
         if (err) return res.status(500).send({ message: 'Failed to authenticate token' });
-        const newToken = jwt.sign({ id: decoded.id }, process.env.SECRET_KEY, { expiresIn: '1s' });
-        res.send({ message: 'unlogged !', token: newToken });
+        const user = await User.findOne({ where: { id: decoded.user.id }});
+        user.token = null;
+        user.save();
+        res.send({ message: 'unlogged !' });
+        res.end();
     });
 })
 
