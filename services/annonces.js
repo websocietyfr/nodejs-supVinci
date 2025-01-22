@@ -44,8 +44,12 @@ async function uploadFiles(req, res, next) {
 }
 
 async function getFile(req, res, next) {
-    const readStream = fs.createReadStream(UPLOAD_DIR + req.params.path);
-    readStream.pipe(res);
+    if(fs.existsSync(UPLOAD_DIR + req.params.path)) {
+        const readStream = fs.createReadStream(UPLOAD_DIR + req.params.path)
+        readStream.pipe(res)
+    } else {
+        return res.status(400).json({status: 'error', message: 'no file found'});
+    }
 }
 
 async function createAnnonce(req, res, next) {
